@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+<style>
+  
+
+  :root {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --border: #d4cfc4;
+    --border-strong: #9a9080;
+    --text: #1a1714;
+    --text-muted: #6b6356;
+    --accent: #2d5a8e;
+    --accent-light: #e8f0f9;
+    --green: #1e6b45;
+    --green-light: #e6f4ec;
+    --red: #8b2020;
+    --red-light: #fdf0f0;
+    --tag-bg: #2d5a8e;
+    --mono: 'Courier New', Courier, monospace;
+    --sans: 'Segoe UI', Calibri, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* LAYOUT */
+  #app { display: grid; grid-template-columns: 340px 1fr; min-height: 100vh; }
+
+  /* SIDEBAR */
+  #sidebar {
+    background: var(--text);
+    color: #e8e4dc;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #sidebar-header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid #3a3530;
+  }
+
+  #sidebar-header h1 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #e8e4dc;
+    line-height: 1.4;
+  }
+
+  #sidebar-header p {
+    font-size: 11px;
+    color: #9a9080;
+    margin-top: 6px;
+    font-family: var(--mono);
+  }
+
+  .sidebar-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid #2e2b27;
+  }
+
+  .sidebar-section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6b6356;
+    margin-bottom: 12px;
+  }
+
+  /* Patient fields */
+  .field-group { margin-bottom: 10px; }
+  .field-group label {
+    display: block;
+    font-size: 11px;
+    color: #9a9080;
+    margin-bottom: 3px;
+    font-family: var(--mono);
+  }
+  .field-group input, .field-group textarea {
+    width: 100%;
+    background: #2a2724;
+    border: 1px solid #3a3530;
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: #e8e4dc;
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field-group input:focus, .field-group textarea:focus {
+    border-color: var(--accent);
+  }
+  .field-group textarea { resize: vertical; min-height: 52px; }
+
+  /* Toggle switches */
+  .toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.1s;
+  }
+  .toggle-item:hover { background: #2a2724; margin: 0 -8px; padding: 6px 8px; }
+
+  .toggle-switch {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: #3a3530;
+    border-radius: 9px;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .toggle-track:before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    left: 3px;
+    top: 3px;
+    background: #6b6356;
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  input:checked + .toggle-track { background: var(--accent); }
+  input:checked + .toggle-track:before { transform: translateX(14px); background: white; }
+
+  .toggle-label {
+    font-size: 12px;
+    color: #c8c0b4;
+    line-height: 1.3;
+    flex: 1;
+  }
+  .toggle-label.required { color: #e8e4dc; font-weight: 500; }
+
+  .toggle-sublabel {
+    font-size: 10px;
+    color: #6b6356;
+    display: block;
+    font-family: var(--mono);
+  }
+
+  /* Action buttons */
+  #sidebar-actions {
+    padding: 16px 20px;
+    margin-top: auto;
+    border-top: 1px solid #2e2b27;
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 5px;
+    border: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: #1e4a7a; }
+
+  .btn-print {
+    background: var(--green);
+    color: white;
+  }
+  .btn-print:hover { background: #155236; }
+
+  .btn-secondary {
+    background: #2a2724;
+    color: #9a9080;
+    border: 1px solid #3a3530;
+  }
+  .btn-secondary:hover { color: #e8e4dc; border-color: #6b6356; }
+
+  /* MAIN CONTENT */
+  #main {
+    padding: 40px 48px;
+    overflow-y: auto;
+  }
+
+  #preview-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  #preview-header h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  #preview-header .hospital-id {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 4px;
+  }
+
+  .status-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Document */
+  #document {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .doc-header {
+    background: var(--accent);
+    color: white;
+    padding: 24px 32px;
+  }
+
+  .doc-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .doc-header p {
+    font-size: 12px;
+    opacity: 0.75;
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  .doc-body { padding: 32px; }
+
+  .doc-section {
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.25s ease;
+  }
+  .doc-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .doc-section h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .doc-section h4:before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .doc-section p {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .doc-section p:last-child { margin-bottom: 0; }
+
+  .inline-field {
+    display: inline;
+    background: #fff8e6;
+    border-bottom: 1.5px solid #e6a800;
+    padding: 0 2px;
+    border-radius: 2px;
+    color: #8a5900;
+    font-style: italic;
+    min-width: 80px;
+    cursor: text;
+  }
+
+  .inline-field.filled {
+    background: transparent;
+    border-bottom-color: transparent;
+    color: var(--text);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+  }
+
+  .contact-item {
+    padding: 8px 12px;
+    background: var(--bg);
+    border-radius: 4px;
+    border-left: 3px solid var(--border-strong);
+  }
+
+  .contact-item .location {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .contact-item .phone {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+
+  .address-block {
+    padding: 10px 14px;
+    background: var(--bg);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent);
+    margin: 8px 0;
+  }
+
+  .address-block .org-name {
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .address-block .org-detail {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+
+  .address-block .org-phone {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .safety-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .safety-list li {
+    padding: 6px 12px;
+    background: var(--bg);
+    border-radius: 3px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .safety-list li:before {
+    content: attr(data-num);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 16px;
+  }
+
+  .app-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .app-tag {
+    padding: 4px 10px;
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: var(--mono);
+    font-weight: 600;
+  }
+
+  .module-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    background: var(--green-light);
+    color: var(--green);
+    border-radius: 2px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .doc-divider {
+    border: none;
+    border-top: 2px dashed var(--border);
+    margin: 28px 0;
+  }
+
+  .part-header {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 32px 0 20px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .part-header:before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--border-strong);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 32px;
+    color: var(--text-muted);
+  }
+  .empty-state svg { margin-bottom: 12px; opacity: 0.3; }
+  .empty-state p { font-size: 13px; line-height: 1.5; }
+
+  /* Print styles */
+  @media print {
+    #sidebar { display: none !important; }
+    #app { grid-template-columns: 1fr !important; }
+    #main { padding: 0 !important; }
+    #preview-header { display: none !important; }
+    #document { border: none !important; box-shadow: none !important; }
+    .doc-header { background: #2d5a8e !important; -webkit-print-color-adjust: exact; }
+    body { background: white !important; }
+    .doc-section { break-inside: avoid; }
+  }
+
+  /* Scrollbar */
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: #3a3530; border-radius: 2px; }
+
+  /* Copy modal */
+  #copy-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 9998;
+  }
+  #copy-modal-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    z-index: 9999;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    width: min(600px, 92vw);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #copy-modal-header {
+    background: var(--accent);
+    color: white;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #copy-modal-hint {
+    padding: 12px 16px 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  #copy-modal-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 12px 16px;
+    border: none;
+    resize: none;
+    height: 320px;
+    width: 100%;
+    color: var(--text);
+    background: #fafaf8;
+    outline: none;
+    border-bottom: 1px solid var(--border);
+  }
+  #copy-modal-footer {
+    padding: 10px 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    background: var(--bg);
+  }
+  #copy-modal-select-btn {
+    padding: 8px 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+  #copy-modal-select-btn:hover { background: #1e4a7a; }
+
+</style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_ExtendedDescription msdt:dt="string"></mso:_ExtendedDescription>
+<mso:_CopySource msdt:dt="string">https://baystatehealth-my.sharepoint.com/personal/jamison_bradshaw_baystatehealth_org/Documents/APTU_Discharge_Builder_5.html</mso:_CopySource>
+<mso:Order msdt:dt="string">114000.000000000</mso:Order>
+<mso:_SourceUrl msdt:dt="string"></mso:_SourceUrl>
+<mso:_SharedFileIndex msdt:dt="string"></mso:_SharedFileIndex>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+<div id="app">
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>APTU Discharge<br>Instructions Builder</h1>
+    <p>Baystate Medical Center</p>
+  </div>
+
+  <!-- Patient fields -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Patient Info</div>
+    <div class="field-group">
+      <label>Patient Name</label>
+      <input type="text" id="f-name" placeholder="Full name" oninput="render()">
+    </div>
+    <div class="field-group">
+      <label>Admission Date</label>
+      <input type="text" id="f-admit" placeholder="e.g. June 3, 2026" oninput="render()">
+    </div>
+    <div class="field-group">
+      <label>Referring Facility</label>
+      <input type="text" id="f-referring" placeholder="e.g. Cooley Dickinson ED" oninput="render()">
+    </div>
+    <div class="field-group">
+      <label>Presenting Symptoms</label>
+      <input type="text" id="f-symptoms" placeholder="e.g. suicidal ideation" oninput="render()">
+    </div>
+    <div class="field-group">
+      <label>Precipitants / Context</label>
+      <input type="text" id="f-precipitants" placeholder="e.g. recent job loss" oninput="render()">
+    </div>
+    <div class="field-group">
+      <label>Clinician Name &amp; Credentials</label>
+      <input type="text" id="f-clinician" placeholder="e.g. Jane Smith, LICSW" oninput="render()">
+    </div>
+    <div class="field-group">
+      <label>Transportation for Follow-up</label>
+      <input type="text" id="f-transport" placeholder="e.g. family, ride-share, PVTA" oninput="render()">
+    </div>
+  </div>
+
+  <!-- Follow-up fields -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Follow-up Details</div>
+    <div id="appointments-container">
+      <div class="appointment-row" data-index="0">
+        <div class="field-group">
+          <label>Appointment 1 — Program / Location</label>
+          <input type="text" class="appt-location" placeholder="Clinic name and address" oninput="render()">
+        </div>
+        <div class="field-group">
+          <label>Appointment 1 — Date/Time</label>
+          <input type="text" class="appt-date" placeholder="e.g. Tuesday June 10, 10am" oninput="render()">
+        </div>
+        <div class="field-group">
+          <label>Appointment 1 — Type</label>
+          <input type="text" class="appt-type" placeholder="e.g. MH, SUD, PCP" oninput="render()">
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+      <button type="button" onclick="addAppointment()" style="width:100%; padding:6px 10px; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-family:var(--mono); letter-spacing:0.04em;">+ Add Appointment</button>
+    </div>
+  </div>
+
+    <!-- Core sections -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Part 1 — Core Sections</div>
+
+    <div class="toggle-item" onclick="toggle('opening')">
+      <label class="toggle-switch"><input type="checkbox" id="t-opening" checked onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label required">Opening Statement</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('contacts')">
+      <label class="toggle-switch"><input type="checkbox" id="t-contacts" checked onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label required">Crisis Contacts</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('followup')">
+      <label class="toggle-switch"><input type="checkbox" id="t-followup" checked onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label required">Follow-up Appointments</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('please-note')">
+      <label class="toggle-switch"><input type="checkbox" id="t-please-note" checked onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label required">Please Note</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('refusals')">
+      <label class="toggle-switch"><input type="checkbox" id="t-refusals" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Refusals<span class="toggle-sublabel">Select if patient refused referrals</span></span>
+    </div>
+    <div class="toggle-item" onclick="toggle('medicine')">
+      <label class="toggle-switch"><input type="checkbox" id="t-medicine" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Discharge to Medicine</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('safety')">
+      <label class="toggle-switch"><input type="checkbox" id="t-safety" checked onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label required">Safety Planning</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('apps')">
+      <label class="toggle-switch"><input type="checkbox" id="t-apps" checked onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Mobile Safety Apps</span>
+    </div><div class="toggle-item" onclick="toggle('qr-resources')">
+      <label class="toggle-switch"><input type="checkbox" id="t-qr-resources" checked onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Online Resources QR Code</span>
+    </div>
+    
+    <div class="toggle-item" onclick="toggle('records')">
+      <label class="toggle-switch"><input type="checkbox" id="t-records" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Medical Records Request</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('crisis')">
+      <label class="toggle-switch"><input type="checkbox" id="t-crisis" checked onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label required">Psychiatric Crisis Services</span>
+    </div>
+  </div>
+
+  <!-- Optional modules -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Part 2 — Optional Modules</div>
+
+    <div class="toggle-item" onclick="toggle('no-insurance')">
+      <label class="toggle-switch"><input type="checkbox" id="t-no-insurance" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">No / Out-of-State Insurance</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('walk-in')">
+      <label class="toggle-switch"><input type="checkbox" id="t-walk-in" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Walk-in Clinics for Therapy &amp; Psych</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('prep')">
+      <label class="toggle-switch"><input type="checkbox" id="t-prep" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">PREP Program (First-episode psychosis)</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('vna')">
+      <label class="toggle-switch"><input type="checkbox" id="t-vna" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Visiting Nurse Referral</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('group-home')">
+      <label class="toggle-switch"><input type="checkbox" id="t-group-home" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Group Home Discharge</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('housing')">
+      <label class="toggle-switch"><input type="checkbox" id="t-housing" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Housing Insecure / Homeless</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('ect')">
+      <label class="toggle-switch"><input type="checkbox" id="t-ect" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Outpatient ECT</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('dmh')">
+      <label class="toggle-switch"><input type="checkbox" id="t-dmh" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">DMH Referral</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('dds')">
+      <label class="toggle-switch"><input type="checkbox" id="t-dds" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">DDS Referral</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('day-tx')">
+      <label class="toggle-switch"><input type="checkbox" id="t-day-tx" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Day Treatment Program</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('peer')">
+      <label class="toggle-switch"><input type="checkbox" id="t-peer" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Peer Support</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('csp')">
+      <label class="toggle-switch"><input type="checkbox" id="t-csp" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">CSP Referral</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('php')">
+      <label class="toggle-switch"><input type="checkbox" id="t-php" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">PHP Referral</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('bpd')">
+      <label class="toggle-switch"><input type="checkbox" id="t-bpd" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Borderline Personality Disorder</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('veteran')">
+      <label class="toggle-switch"><input type="checkbox" id="t-veteran" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Veteran / Active Service Member</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('sud')">
+      <label class="toggle-switch"><input type="checkbox" id="t-sud" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Substance Use Treatment</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('opiates')">
+      <label class="toggle-switch"><input type="checkbox" id="t-opiates" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Opioid Medications / Narcan</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('section35')">
+      <label class="toggle-switch"><input type="checkbox" id="t-section35" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Section 35</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('autism')">
+      <label class="toggle-switch"><input type="checkbox" id="t-autism" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Autism Resources</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('parenting')">
+      <label class="toggle-switch"><input type="checkbox" id="t-parenting" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Parenting Resources</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('financial')">
+      <label class="toggle-switch"><input type="checkbox" id="t-financial" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Financial Assistance</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('social-svcs')">
+      <label class="toggle-switch"><input type="checkbox" id="t-social-svcs" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Social Service Support</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('ssdi')">
+      <label class="toggle-switch"><input type="checkbox" id="t-ssdi" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Social Security Sign-up</span>
+    </div>
+    <div class="toggle-item" onclick="toggle('employment')">
+      <label class="toggle-switch"><input type="checkbox" id="t-employment" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Employment Resources</span>
+    </div>
+  </div>
+
+  <div id="sidebar-actions">
+    <button class="btn btn-print" id="copy-btn" onclick="copyText()">⎘ Copy to Clipboard</button>
+    <button class="btn btn-secondary" onclick="resetAll()">↺ Reset All</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="preview-header">
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted)">Baystate APTU</div>
+      <div class="hospital-id">Discharge Instructions</div>
+    </div>
+    <span class="status-badge" id="section-count">Loading…</span>
+  </div>
+
+  <div id="document">
+    <div class="doc-header">
+      <h3>PATIENT DISCHARGE INSTRUCTIONS</h3>
+      <p id="doc-subtitle">Baystate Adult Psychiatric Treatment Unit · 759 Chestnut Street, Springfield MA 01199</p>
+    </div>
+    <div class="doc-body" id="doc-body">
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Copy modal (populated by JS) -->
+<div id="copy-modal" style="display:none;"></div>
+
+<script>
+// Helpers
+function v(id) { return (document.getElementById(id)||{}).value || ''; }
+function chk(id) { return (document.getElementById(id)||{}).checked; }
+function field(val, placeholder) {
+  if (val.trim()) return `<span class="inline-field filled">${val}</span>`;
+  return `<span class="inline-field">${placeholder}</span>`;
+}
+
+function toggle(key) {
+  const el = document.getElementById('t-' + key);
+  if (el) { el.checked = !el.checked; render(); }
+}
+
+function resetAll() {
+  document.querySelectorAll('#sidebar input[type=text], #sidebar textarea').forEach(el => el.value = '');
+  document.querySelectorAll('#sidebar input[type=checkbox]').forEach(el => {
+    const defaults = ['t-opening','t-contacts','t-followup','t-please-note','t-safety','t-apps','t-crisis'];
+    el.checked = defaults.includes(el.id);
+  });
+  render();
+}
+
+function section(title, content, tag) {
+  return `<div class="doc-section">
+    <h4>${title}${tag ? `<span class="module-tag">${tag}</span>` : ''}</h4>
+    ${content}
+  </div>`;
+}
+
+function addr(name, addr1, addr2, phone) {
+  return `<div class="address-block">
+    <div class="org-name">${name}</div>
+    <div class="org-detail">${addr1}${addr2 ? '<br>'+addr2 : ''}</div>
+    ${phone ? `<div class="org-phone">${phone}</div>` : ''}
+  </div>`;
+}
+
+function getAppointments() {
+  const rows = document.querySelectorAll('#appointments-container .appointment-row');
+  const appts = [];
+  rows.forEach(function(row) {
+    const loc = (row.querySelector('.appt-location') || {}).value || '';
+    const date = (row.querySelector('.appt-date') || {}).value || '';
+    const type = (row.querySelector('.appt-type') || {}).value || '';
+    appts.push({ location: loc.trim(), date: date.trim(), type: type.trim() });
+  });
+  return appts;
+}
+
+function addAppointment() {
+  const container = document.getElementById('appointments-container');
+  const count = container.querySelectorAll('.appointment-row').length + 1;
+  const div = document.createElement('div');
+  div.className = 'appointment-row';
+  div.setAttribute('data-index', count - 1);
+  div.style.cssText = 'border-top:1px solid var(--border); margin-top:10px; padding-top:10px;';
+  div.innerHTML = '<div class="field-group"><label>Appointment ' + count + ' — Program / Location</label><input type="text" class="appt-location" placeholder="Clinic name and address" oninput="render()"></div>' +
+    '<div class="field-group"><label>Appointment ' + count + ' — Date/Time</label><input type="text" class="appt-date" placeholder="e.g. Tuesday June 10, 10am" oninput="render()"></div>' +
+    '<div class="field-group"><label>Appointment ' + count + ' — Type</label><input type="text" class="appt-type" placeholder="e.g. MH, SUD, PCP" oninput="render()"></div>' +
+    '<button type="button" onclick="removeAppointment(this)" style="margin-top:4px; padding:4px 8px; background:var(--red-light); color:var(--red); border:1px solid var(--red); border-radius:4px; cursor:pointer; font-size:11px;">✕ Remove</button>';
+  container.appendChild(div);
+  render();
+}
+
+function removeAppointment(btn) {
+  const row = btn.closest('.appointment-row');
+  if (document.querySelectorAll('.appointment-row').length > 1) {
+    row.remove();
+    // Renumber remaining appointments
+    document.querySelectorAll('.appointment-row').forEach(function(r, i) {
+      r.querySelectorAll('label').forEach(function(lbl) {
+        lbl.textContent = lbl.textContent.replace(/Appointment \d+/, 'Appointment ' + (i + 1));
+      });
+    });
+    render();
+  }
+}
+
+function render() {
+  const name = v('f-name');
+  const admit = v('f-admit');
+  const referring = v('f-referring');
+  const symptoms = v('f-symptoms');
+  const precipitants = v('f-precipitants');
+  const clinician = v('f-clinician');
+  const transport = v('f-transport');
+const appointments = getAppointments();
+
+  
+  let html = '';
+  let count = 0;
+
+  // ── PART 1 ──
+  html += `<div class="part-header">Part 1 — Core Sections</div>`;
+
+  if (chk('t-opening')) {
+    count++;
+    html += section('Opening Statement', `
+      <p>${field(name,'[Patient Name]')}, you were admitted to Baystate APTU on ${field(admit,'[admission date]')} from ${field(referring,'[referring facility]')} due to ${field(symptoms,'[presenting symptoms]')} in the context of ${field(precipitants,'[precipitants/trigger]')}.</p>
+    `);
+  }
+
+  if (chk('t-contacts')) {
+    count++;
+    html += section('If You Have Questions, Please Call', `
+      <p style="margin-bottom:12px;">24/7 contact, including studies pending at discharge:</p>
+      <div class="contact-grid">
+        <div class="contact-item"><div class="location">APTU Main RN</div><div class="phone">(413) 794-3360</div></div>
+        <div class="contact-item"><div class="location">National Crisis</div><div class="phone">988</div></div>
+        <div class="contact-item"><div class="location">MA Behavioral Health Helpline</div><div class="phone">833-773-2445</div></div>
+        <div class="contact-item"><div class="location">PCS Springfield</div><div class="phone">(413) 733-6661</div></div>
+        <div class="contact-item"><div class="location">PCS Northampton</div><div class="phone">(413) 586-5555</div></div>
+        <div class="contact-item"><div class="location">PCS Westfield</div><div class="phone">(413) 568-6386</div></div>
+        <div class="contact-item"><div class="location">PCS Holyoke</div><div class="phone">(413) 532-8016</div></div>
+        <div class="contact-item"><div class="location">PCS Greenfield</div><div class="phone">(413) 774-5411</div></div>
+      </div>
+      <p style="margin-top:12px;">Behavioral Health Clinician: ${field(clinician,'[Clinician Name, Credentials]')}</p>
+      <p>Good luck and take care.</p>
+      <p>Best Contact Number for Follow-up: <strong>(413) 794-3360</strong></p>
+      ${transport ? `<p>Transportation for Follow-up: <strong>${transport}</strong></p>` : `<p>Transportation for Follow-up: ${field('','[specify]')}</p>`}
+    `);
+  }
+
+  if (chk('t-followup')) {
+    count++;
+    let fu = '';
+    const filledAppts = appointments.filter(function(a) { return a.location || a.date; });
+    if (filledAppts.length > 0) {
+      filledAppts.forEach(function(appt, i) {
+        const loc = appt.location || '[location]';
+        const date = appt.date || '[date and time]';
+        const typeLabel = appt.type ? appt.type + ' ' : '';
+        fu += '<p>You have a ' + typeLabel + 'follow-up appointment' + (appt.location ? ' at: ' + field(appt.location, '[location]') : ' (location TBD)') + (appt.date ? ', scheduled for: ' + field(appt.date, '[date and time]') : '') + '.</p>';
+      });
+    } else {
+      fu += '<p>You have follow-up services scheduled. Please confirm the details with your care team.</p>';
+    }
+    html += section('Follow-up Appointments', fu);
+  }
+
+  if (chk('t-please-note')) {
+    count++;
+    html += section('Please Note', `
+      <p>Some agencies will automatically cancel your medication appointment if you do not attend your therapy appointment.</p>
+      <p>Bring your insurance cards and photo ID with you to all appointments.</p>
+      <p>Bring these discharge instructions with you to all appointments and show your follow-up care providers.</p>
+      <p>Bring all of your medications with you to your medication appointment.</p>
+    `);
+  }
+
+  if (chk('t-refusals')) {
+    count++;
+    html += section('Refusals', `
+      <p>You refused referrals for outpatient mental health and substance use treatment. It is strongly recommended that you engage in these services for follow-up care. Please see below for a list of mental health and substance use treatment providers.</p>
+      <p>You refused appointments and communication with your outpatient mental health treatment team. It is strongly recommended that you follow up with your providers as soon as possible to obtain follow-up appointments.</p>
+    `);
+  }
+
+  if (chk('t-medicine')) {
+    count++;
+    html += section('Discharge to Medicine', `
+      <p>You are being discharged to medicine due to urgent medical needs. Staff on medicine will engage you in treatment and discharge planning.</p>
+    `);
+  }
+
+  if (chk('t-safety')) {
+    count++;
+    html += section('Safety Planning', `
+      <p style="margin-bottom:8px;font-weight:500;">People to Call for Support:</p>
+      <ul class="safety-list">
+        <li data-num="1">Call family</li>
+        <li data-num="2">Call crisis: <strong>(413) 733-6661</strong></li>
+        <li data-num="3">Call <strong>911</strong> or <strong>988</strong></li>
+        <li data-num="4">Speak with your support person</li>
+        <li data-num="5">Talk with your therapist</li>
+        <li data-num="6">Call the unit and speak with staff: <strong>(413) 794-3360</strong></li>
+      </ul>
+    `);
+  }
+
+  if (chk('t-apps')) {
+    count++;
+    html += section('Mobile Apps for Safety Plan', `
+      <p>Here are some safety apps you can download to your mobile device:</p>
+      <div class="app-list">
+        <span class="app-tag">ReMinder Suicide Safety Plan</span>
+        <span class="app-tag">Suicide Safety Plan (Inquiry Health)</span>
+        <span class="app-tag">Be Safe (Calm Consulting)</span>
+      </div>
+    `);
+  }
+
+  if (chk('t-qr-resources')) {
+    count++;
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent('https://baystatehealth.sharepoint.com/sites/APTU/SiteAssets/APTU_MH_Resources.html');
+    html += section('Online Resources &amp; Safety Apps', `
+      <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;">
+        <div style="flex-shrink:0;text-align:center;">
+          <img src="${qrUrl}" alt="QR code for online resources" style="width:130px;height:130px;border:1px solid #d4cfc4;border-radius:4px;" />
+          <div style="font-size:10px;margin-top:4px;color:#6b6356;font-family:'Courier New',monospace;">Scan for resources</div>
+        </div>
+        <div style="flex:1;min-width:180px;">
+          <p><strong>Scan the QR code</strong> for a full list of mental health resources, including:</p>
+          <ul style="margin:8px 0 0 18px;line-height:1.8;">
+            <li>Crisis chat &amp; text lines (988, Crisis Text Line)</li>
+            <li>Mobile safety plan apps</li>
+            <li>MA Behavioral Health Helpline</li>
+            <li>NAMI, SAMHSA, and other online supports</li>
+          </ul>
+          <p style="margin-top:10px;font-size:11px;color:#6b6356;">Or visit: <em>https://baystatehealth.sharepoint.com/sites/APTU/SiteAssets/APTU_MH_Resources.html</em></p>
+        </div>
+      </div>
+    `);
+  }
+  if (chk('t-records')) {
+    count++;
+    html += section('Medical Records', `
+      <p>You indicated you want your medical records. You can request records from your hospitalization:</p>
+      ${addr('By Mail','759 Chestnut Street @ Whitney Avenue','Springfield, MA 01199 · ATTN: Correspondence · Fax: 1-413-322-4346')}
+      <p style="margin-top:8px;"><strong>In Person:</strong> Monday–Friday, 8:30 AM – 5:00 PM</p>
+      <p><strong>By Phone:</strong> (413) 794-2460</p>
+    `);
+  }
+
+  if (chk('t-crisis')) {
+    count++;
+    html += section('Psychiatric Crisis Services', `
+      <div class="contact-grid">
+        <div class="contact-item"><div class="location">Springfield / Chicopee / Holyoke / West Springfield / Wilbraham / Hampden / Agawam / Ware / South Hampton</div><div class="phone">(413) 733-6661</div></div>
+        <div class="contact-item"><div class="location">Westfield / Agawam</div><div class="phone">(413) 568-6386</div></div>
+        <div class="contact-item"><div class="location">Greenfield</div><div class="phone">(413) 774-5411</div></div>
+        <div class="contact-item"><div class="location">Northampton / Hadley</div><div class="phone">(413) 586-5555</div></div>
+        <div class="contact-item"><div class="location">Enfield, CT</div><div class="phone">(860) 253-5020</div></div>
+        <div class="contact-item"><div class="location">Burlington, VT</div><div class="phone">(802) 863-2400</div></div>
+      </div>
+    `);
+  }
+
+  // ── PART 2 ──
+  const part2Sections = ['no-insurance','walk-in','prep','vna','group-home','housing','ect','dmh','dds','day-tx','peer','csp','php','bpd','veteran','sud','opiates','section35','autism','parenting','financial','social-svcs','ssdi','employment'];
+  const anyPart2 = part2Sections.some(s => chk('t-' + s));
+
+  if (anyPart2) {
+    html += `<hr class="doc-divider"><div class="part-header">Part 2 — Situational Modules</div>`;
+  }
+
+  if (chk('t-no-insurance')) {
+    count++;
+    html += section('No Insurance / Out-of-State Insurance', `
+      <p>You currently do not have insurance to set up aftercare. Please see below for instructions on how to follow up with MassHealth and where to get appointments once your insurance is active.</p>
+      <p>You can go to <strong>www.mahealthconnector.org</strong> or call <strong>1-877-623-6765</strong> to obtain insurance.</p>
+      ${addr('MassHealth Eligibility Office','88 Industry Avenue, Suite D','Springfield, MA 01104','(800) 841-2900')}
+      ${addr('CT Medicaid','1-877-CT-HUSKY (1-877-284-8759)','or 1-855-6-CONNECT (1-855-626-6632)','')}
+    `, 'Optional');
+  }
+
+  if (chk('t-walk-in')) {
+    count++;
+    html += section('Follow-up Walk-in Clinics', `
+      ${addr('BHN – Liberty Street Clinic','417 Liberty Street, Springfield, MA 01109','Walk-in: Tuesdays & Thursdays 10AM–12PM','(413) 736-3668')}
+      ${addr('BHN Carson Center','77 Mill Street, Westfield, MA 01085','Walk-in: Mon–Fri 8AM–8PM, Sat–Sun 9AM–5PM','(413) 568-6141')}
+      ${addr('CHD – CBHC Behavioral Health Center','1109 Granby Road, Chicopee, MA 01020','Walk-in: Mon–Fri 8AM–8PM','(833) 243-8255')}
+      ${addr('Clinical and Support Options (CSO)','1 Federal Street, Bldg 102, 3rd Floor, Springfield','Walk-in: Mon–Thu 8AM–6PM, Fri 8AM–5PM','(413) 737-9544')}
+      ${addr('Gandara Mental Health Center','2155 Main Street, Springfield, MA 01104','Walk-in: Mon–Fri 9AM–4PM','(413) 732-2120')}
+      ${addr('ServiceNet – Northampton','50 Pleasant Street, Northampton, MA 01060','','(413) 584-6855')}
+      ${addr('The Brien Center – Pittsfield','359 Fenn Street, Pittsfield, MA 01201','','(413) 499-0412')}
+    `, 'Optional');
+  }
+
+  if (chk('t-prep')) {
+    count++;
+    html += section('PREP Program – First Episode Psychosis', `
+      <p>A referral has been made on your behalf to the PREP program. ServiceNet's Prevention and Recovery Early Psychosis (PREP) program provides intensive, evidence-based outpatient treatment for adolescents and young adults (ages 16–30) experiencing their first episode of psychosis.</p>
+      ${addr('PREP Program – ServiceNet','1236 Main Street, Holyoke, MA 01040','Ashley Papineau: (413) 727-6450 · Shay Solis: (413) 588-1376','(413) 561-0060')}
+    `, 'Optional');
+  }
+
+  if (chk('t-vna')) {
+    count++;
+    html += section('Visiting Nurse Referral', `
+      ${addr('Medical Resources Home Health Corp. (MRHHC)','Referral placed for visiting nurse services','Contact if not heard from by tomorrow','(413) 592-4600')}
+      ${addr('Gentiva Visiting Nurse Association','Referral placed for visiting nurse services','Contact if not heard from by tomorrow','(413) 733-1132')}
+      ${addr('Personal Touch Visiting Nurses','Referral placed for visiting nurse services','Contact if not heard from by tomorrow','(413) 747-7344')}
+    `, 'Optional');
+  }
+
+  if (chk('t-group-home')) {
+    count++;
+    html += section('Group Home Discharge', `
+      <p>You are discharging back to your group home today. You will be picked up by group home staff.</p>
+    `, 'Optional');
+  }
+
+  if (chk('t-housing')) {
+    count++;
+    html += section('Housing Options &amp; Resources', `
+      <p>If you are in need of housing, you may check yourself into one of the following emergency shelters. It is recommended you call before arrival to reserve a bed:</p>
+      ${addr('Worthington Street Shelter','769 Worthington Street, Springfield, MA 01105','','(413) 732-3069')}
+      ${addr('Taylor Street Shelter (men only)','148 Taylor Street, Springfield, MA 01105','','(413) 732-0516')}
+      ${addr('The Samaritan Inn','7 Free Street, Westfield, MA 01085','','(413) 568-3122')}
+      ${addr('Northampton Interfaith Cot Shelter','129 Main Street, Northampton, MA 01060','','(413) 313-5557')}
+      ${addr("Craig's Place Shelter","434 N Pleasant St., Amherst, MA 01002","Arrive 4PM for a bed",'(413) 256-0704')}
+      ${addr('BHN Living Room','21 Warwick Street, Springfield, MA 01104','Up to two nights if space available','(413) 310-3312')}
+      <p style="margin-top:12px;"><strong>For CT shelters:</strong> Dial 2-1-1 (in state) or 800-203-1234 for a shelter bed.</p>
+      ${addr('Wayfinders (housing support)','1780 Main Street, Springfield, MA 01105','Housing support, financial info, community resources','(413) 233-1500')}
+      ${addr('Healthcare for the Homeless','755 Worthington Street, Springfield, MA 01109','Mental health, medication mgmt, primary care — no shelter residency required','(413) 734-7140')}
+    `, 'Optional');
+  }
+
+  if (chk('t-ect')) {
+    count++;
+    html += section('Electroconvulsive Therapy (ECT) Follow-up', `
+      ${addr('Baystate Medical Center – Wesson Building','759 Chestnut Street, Springfield, MA 01109','Springfield 2-5 unit · Questions: Pat Pupek, 8AM–5PM Mon–Fri','(413) 794-0061')}
+      <p>Follow-up services scheduled on: ${field('','[date/time]')}</p>
+      <p>Please park in the lot across from the Wesson Building. Kristine will meet you at the Wesson entrance.</p>
+      <p><strong>Do not drive for at least 2 weeks after your last ECT treatment.</strong></p>
+    `, 'Optional');
+  }
+
+  if (chk('t-dmh')) {
+    count++;
+    html += section('Department of Mental Health (DMH)', `
+      <p>A referral has been made on your behalf to the Department of Mental Health (DMH). It is recommended you contact DMH to review the progress of your application and explore available services.</p>
+      <p>DMH: <strong>(413) 452-2300</strong> or <strong>(413) 587-6304</strong></p>
+    `, 'Optional');
+  }
+
+  if (chk('t-dds')) {
+    count++;
+    html += section('Department of Developmental Services (DDS)', `
+      <p>Your DDS workers have been contacted and updated on your discharge plan. It is recommended you contact your DDS workers in the next several days to schedule an appointment.</p>
+      <p>DDS: <strong>(413) 784-1339</strong></p>
+    `, 'Optional');
+  }
+
+  if (chk('t-day-tx')) {
+    count++;
+    html += section('Day Treatment Program', `
+      ${addr('STAR Day Treatment Program','622 State Street, Springfield, MA 01109','Contact Edward Cruz','(413) 439-1240 or (413) 333-4511')}
+      ${addr('Quality Adult Day Life Service','52b Wayside Ave, West Springfield, MA 01089','','(413) 206-5880')}
+      ${addr('Quality Adult Day Life Services','209 South Street, Holyoke, MA 01040','','(413) 322-0178')}
+    `, 'Optional');
+  }
+
+  if (chk('t-peer')) {
+    count++;
+    html += section('Peer Support', `
+      ${addr('The Lighthouse Program','1401 State Street, Springfield, MA','Orientation required · Lifetime membership after intake','(413) 736-8974')}
+      ${addr('Wildflower Alliance (Holyoke)','187 High Street Suite 303, Holyoke, MA 01040','Peer-run program · toll-free: (866) 641-2853','(413) 539-5941')}
+      ${addr('AFIYA (Wildflower Peer Respite)','256 Jackson Street, Northampton, MA 01060','Call for bed availability','(413) 570-2990')}
+      ${addr('Odyssey House','474 Appleton St, Holyoke, MA 01040','','(413) 538-4375')}
+      ${addr('Forum House','55 Broad St., Westfield, MA 01085','','(413) 562-5293')}
+    `, 'Optional');
+  }
+
+  if (chk('t-csp')) {
+    count++;
+    html += section('Community Support Program (CSP)', `
+      <p>A referral was made on your behalf to the Community Support Program (CSP). CSP can help with transportation to appointments, community resources, employment search, housing search, and benefits applications.</p>
+      ${addr('BHN CSP','417 Liberty Street, Springfield, MA 01104','Jackie Milton: (413) 310-0387 · Renee Ruiz: (413) 333-9141','(413) 736-3668')}
+      ${addr('CSO CSP','130 Maple Street #325, Springfield, MA 01105','','(413) 737-9544')}
+    `, 'Optional');
+  }
+
+  if (chk('t-php')) {
+    count++;
+    html += section('Partial Hospitalization Program (PHP)', `
+      <p>A referral has been placed on your behalf to a PHP. You have an intake appointment on: ${field('','[date/time]')}</p>
+      ${addr('PHP at Holyoke Medical Center','20 Hospital Drive, Holyoke, MA','Karen: (413) 534-2653','(413) 534-2627')}
+      ${addr('Valley Springs Behavioral Health (Holyoke)','45 Lower Westfield Road, Holyoke, MA','','(413) 315-4100')}
+      ${addr('Valley Springs Behavioral Health (Greenfield)','157 High Street, Greenfield, MA','','(413) 315-4100')}
+      ${addr('Arbor PHP (Virtual)','384 Washington Street, Norwell, MA','','(781) 871-6550')}
+    `, 'Optional');
+  }
+
+  if (chk('t-bpd')) {
+    count++;
+    html += section('Borderline Personality Disorder Resources', `
+      <p>The National Education Alliance for Borderline Personality Disorder (NEABPD) offers support for patients diagnosed with BPD and their families.</p>
+      <p>Website: <strong>borderlinepersonalitydisorder.org</strong></p>
+    `, 'Optional');
+  }
+
+  if (chk('t-veteran')) {
+    count++;
+    html += section('Veterans &amp; Active Service Members', `
+      ${addr('VA Medical Center – Leeds','421 N Main St, Leeds, MA 01053','Mental health: ext. 2336','(413) 584-4040')}
+      ${addr('Springfield VA Clinic','25 Bond St, Springfield, MA 01104','','(413) 731-6000')}
+      ${addr('Springfield Vet Center','95A Ashley Avenue, Suite A, West Springfield, MA 01089','','(413) 737-5167')}
+      ${addr('West Haven VA Medical Center','950 Campbell Avenue, West Haven, CT 06516','Mental health: ext. 2570','(203) 932-5711')}
+      <p style="margin-top:10px;">Find a Veterans Service Officer: <strong>mass.gov/info-details/find-a-veterans-service-officer-near-you</strong></p>
+      <p>VA Portal: <strong>va.gov</strong> · My HealtheVet: <strong>myhealth.va.gov</strong></p>
+    `, 'Optional');
+  }
+
+  if (chk('t-sud')) {
+    count++;
+    html += section('Substance Use Treatment', `
+      <p>It is recommended you participate in as much substance use treatment as you can. 24-hour AA Hotline: <strong>(413) 532-2111</strong> · Addiction Assistance Hotline: <strong>(800) 559-9503</strong></p>
+      ${addr('Northstar Recovery Center (PHP/IOP)','1319 Riverdale Street, W. Springfield, MA','','(833) 519-2226')}
+      ${addr('Compass Recovery Center (PHP/IOP)','975A Springfield Street, Feeding Hills, MA','','(844) 844-2978')}
+      ${addr('Miravista IOP','1233 Main Street, Holyoke, MA','','(413) 536-5111')}
+      ${addr('CSO START IOP – Northampton','8 Atwood Drive #201, Northampton, MA','Walk-in: Mon–Thu 10AM–4PM, Fri 10AM–2PM','(413) 582-0471')}
+      ${addr('Gandara IOP (Spanish-language)','85 St. George Street, Springfield, MA','Walk-in: Mon–Fri 8AM–11:30AM','(413) 732-2120')}
+      <p style="margin-top:8px;">Bureau of Substance Abuse Services Helpline: <strong>(800) 327-5050</strong></p>
+    `, 'Optional');
+  }
+
+  if (chk('t-opiates')) {
+    count++;
+    html += section('Opioid Medications &amp; Narcan', `
+      <p>Unintentional overdoses from opiates are preventable. Narcan (Naloxone) can rescue people from overdose and is available at many pharmacies across Massachusetts, with or without a prescription.</p>
+      <p>For information on where to obtain Narcan or for a treatment referral, call the Massachusetts Substance Abuse Information and Education Helpline: <strong>(800) 327-5050</strong></p>
+      <p>Narcan is also available at the Baystate Medical Center Outpatient Pharmacy and at many local CVS, Walgreens, and Rite Aid locations.</p>
+    `, 'Optional');
+  }
+
+  if (chk('t-section35')) {
+    count++;
+    html += section('Section 35', `
+      <p>You are being discharged on a Section 35 today. You will be taken to the Springfield District Court where mandated substance use treatment will be considered. If ordered, you will be transferred to an addiction treatment facility.</p>
+      <p>When you return to the area, consider the following options for continued treatment:</p>
+      ${addr('Northstar Recovery Center','1319 Riverdale Street, W. Springfield, MA','','(833) 519-2226')}
+      ${addr('Compass Recovery Center','975A Springfield Street, Feeding Hills, MA','','(844) 844-2978')}
+      ${addr('CSO START IOP','8 Atwood Drive #201, Northampton, MA','Walk-in: Mon–Thu 10AM–4PM, Fri 10AM–2PM','(413) 582-0471')}
+    `, 'Optional');
+  }
+
+  if (chk('t-autism')) {
+    count++;
+    html += section('Autism Resources', `
+      <p>Autism Connections is the Autism Resource Center for Western Massachusetts, serving Hampden, Hampshire, Franklin, and Berkshire counties. They provide support, information, and practical help for children and adults with autism, families, and professionals.</p>
+      ${addr('Autism Connections','Easthampton & Pittsfield offices','autismconnections@pathlightgroup.org','(413) 732-0531')}
+      <p>Website: <strong>autismconnectionsma.org</strong></p>
+    `, 'Optional');
+  }
+
+  if (chk('t-parenting')) {
+    count++;
+    html += section('Parenting &amp; Family Resources', `
+      <p><strong>National Parent Helpline:</strong> 1-855-4APARENT (1-855-427-2736)</p>
+      <p><strong>Parental Stress Line (24/7):</strong> 1-800-632-8188</p>
+      <p><strong>Healthy Children (AAP):</strong> healthychildren.org</p>
+      <p><strong>Postpartum Support International – MA:</strong> psichapters.com/ma/</p>
+      <p><strong>Children's Trust:</strong> onetoughjob.org</p>
+    `, 'Optional');
+  }
+
+  if (chk('t-financial')) {
+    count++;
+    html += section('Financial &amp; Basic Needs Assistance', `
+      <p><strong>Dial 2-1-1</strong> for information on housing, food, financial services, and community resources.</p>
+      <p><strong>Department of Transitional Assistance – SNAP:</strong> (877) 382-2363</p>
+      <p><strong>Project Bread FoodSource Hotline:</strong> 1-800-645-8333</p>
+      <p><strong>RAFT (rental assistance up to $4,000/year):</strong> mahomeless.org</p>
+      ${addr('Springfield Partners for Community Action','721 State Street, Springfield, MA 01108','','(413) 263-6500')}
+    `, 'Optional');
+  }
+
+  if (chk('t-social-svcs')) {
+    count++;
+    html += section('Social Service Support', `
+      <p><strong>Dial 2-1-1</strong> for housing, legal aid, fuel assistance, financial services, and more.</p>
+      <p><strong>Legal Advocacy & Resource Center:</strong> (800) 342-5297</p>
+      <p><strong>Western Mass Legal Services:</strong> (413) 781-7814</p>
+      <p><strong>Greater Springfield Senior Services:</strong> (413) 781-8800</p>
+      <p><strong>National Domestic Violence Hotline:</strong> thehotline.org</p>
+      <p><strong>SAMHSA National Helpline:</strong> (800) 662-4357</p>
+      <p><strong>Samaritans Helpline (24/7):</strong> (877) 870-4673</p>
+    `, 'Optional');
+  }
+
+  if (chk('t-ssdi')) {
+    count++;
+    html += section('Social Security Insurance Benefits', `
+      ${addr('Social Security Administration – Springfield','70 Bond Street, Springfield, MA','Bring: Social Security card, photo ID, proof of citizenship','(866) 964-5061')}
+      ${addr('Social Security Administration – Holyoke','200 High Street, Holyoke, MA','','(413) 536-3649')}
+      <p>For assistance applying for SSI or SSDI: Fine, Emond &amp; Appledon Law Firm: <strong>(413) 781-5400</strong></p>
+    `, 'Optional');
+  }
+
+  if (chk('t-employment')) {
+    count++;
+    html += section('Employment Resources', `
+      ${addr('Future Works','1 Federal Street, Suite 3, Springfield, MA 01105','Request to meet with a counselor to develop your employment portfolio','(413) 858-2800')}
+      ${addr('Career Point','850 High Street, Suite 1, Holyoke, MA 01040','Request to meet with a counselor to develop your employment portfolio','(413) 532-4900')}
+    `, 'Optional');
+  }
+
+  if (count === 0) {
+    html = `<div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      <p>All sections are hidden.<br>Toggle sections in the sidebar to build the document.</p>
+    </div>`;
+  }
+
+  document.getElementById('doc-body').innerHTML = html;
+  document.getElementById('section-count').textContent = `${count} section${count !== 1 ? 's' : ''}`;
+
+  // Update subtitle
+  const subtitle = name ? `${name} · ` : '';
+  document.getElementById('doc-subtitle').textContent = subtitle + 'Baystate Adult Psychiatric Treatment Unit · 759 Chestnut Street, Springfield MA 01199';
+}
+
+function copyText() {
+  const body = document.getElementById('doc-body');
+  if (!body) return;
+  const btn = document.getElementById('copy-btn');
+
+  // Plain-text fallback string (preserves line breaks)
+  function nodeToText(node) {
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+    let t = '';
+    for (const child of node.childNodes) t += nodeToText(child);
+    const tag = node.tagName;
+    if (['P','DIV','H1','H2','H3','H4','LI','TR','BR','SECTION','HEADER'].includes(tag)) t += '\n';
+    return t;
+  }
+
+  // Build a clean, self-contained HTML document so pasted output keeps formatting
+  function buildRichHtml() {
+    const inner = body.innerHTML;
+    let css = '';
+    try {
+      for (const sheet of document.styleSheets) {
+        try { for (const rule of sheet.cssRules) css += rule.cssText + '\n'; } catch (e) {}
+      }
+    } catch (e) {}
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + css + '</style></head><body class="doc-body-export">' + inner + '</body></html>';
+  }
+
+  const plain = nodeToText(body).replace(/\n{3,}/g, '\n\n').trim();
+  const rich = buildRichHtml();
+
+  function flashOk() {
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = '\u2713 Copied!';
+    setTimeout(function(){ btn.textContent = orig; }, 1800);
+  }
+
+  // PRIMARY: rich-text copy (text/html + text/plain) so Word/email keep formatting
+  if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+    try {
+      const item = new ClipboardItem({
+        'text/html': new Blob([rich], { type: 'text/html' }),
+        'text/plain': new Blob([plain], { type: 'text/plain' })
+      });
+      navigator.clipboard.write([item]).then(flashOk).catch(function(){ legacyRichCopy(); });
+      return;
+    } catch (e) { /* fall through */ }
+  }
+  legacyRichCopy();
+
+  // SECONDARY: select the rendered (formatted) node and execCommand('copy').
+  // This copies RICH text (not plain) because we select live formatted DOM.
+  function legacyRichCopy() {
+    try {
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(body);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      const ok = document.execCommand('copy');
+      sel.removeAllRanges();
+      if (ok) { flashOk(); return; }
+    } catch (e) {}
+    showFallbackModal(plain);
+  }
+
+  // LAST RESORT: modal with the (formatted) content selected for manual copy
+  function showFallbackModal(text) {
+    let modal = document.getElementById('copy-modal');
+    if (!modal) { modal = document.createElement('div'); modal.id = 'copy-modal'; document.body.appendChild(modal); }
+    modal.innerHTML = '';
+    modal.style.display = 'block';
+    const backdrop = document.createElement('div'); backdrop.id = 'copy-modal-backdrop';
+    const box = document.createElement('div'); box.id = 'copy-modal-box';
+    const header = document.createElement('div'); header.id = 'copy-modal-header';
+    header.innerHTML = '<span>Copy discharge instructions</span>';
+    const closeX = document.createElement('button'); closeX.textContent = '\u00d7'; closeX.style.cssText = 'background:none;border:none;font-size:22px;cursor:pointer;line-height:1;';
+    closeX.onclick = function(){ modal.style.display = 'none'; };
+    header.appendChild(closeX);
+    const live = document.createElement('div'); live.id = 'copy-modal-rich';
+    live.setAttribute('contenteditable', 'true');
+    live.style.cssText = 'max-height:320px;overflow:auto;border:1px solid #ccc;border-radius:6px;padding:10px;background:#fff;';
+    live.innerHTML = body.innerHTML;
+    const footer = document.createElement('div'); footer.id = 'copy-modal-footer';
+    const selBtn = document.createElement('button'); selBtn.id = 'copy-modal-select-btn'; selBtn.textContent = 'Select All & Copy';
+    selBtn.onclick = function(){
+      const sel = window.getSelection(); const range = document.createRange();
+      range.selectNodeContents(live); sel.removeAllRanges(); sel.addRange(range);
+      try { document.execCommand('copy'); flashOk(); } catch (e) {}
+    };
+    const hint = document.createElement('div'); hint.style.cssText = 'font-size:12px;color:#666;margin-top:8px;';
+    hint.textContent = 'Tip: click Select All & Copy, or press ' + (navigator.platform.indexOf('Mac')>-1 ? 'Cmd+A then Cmd+C' : 'Ctrl+A then Ctrl+C') + '.';
+    footer.appendChild(selBtn);
+    box.appendChild(header); box.appendChild(live); box.appendChild(hint); box.appendChild(footer);
+    backdrop.onclick = function(){ modal.style.display = 'none'; };
+    modal.appendChild(backdrop); modal.appendChild(box);
+    setTimeout(function(){ const sel = window.getSelection(); const range = document.createRange(); range.selectNodeContents(live); sel.removeAllRanges(); sel.addRange(range); }, 100);
+  }
+}
+document.addEventListener('DOMContentLoaded', function() { render(); });
+</script>
+</body>
+</html>
