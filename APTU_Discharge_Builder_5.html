@@ -283,7 +283,7 @@
     font-family: var(--mono);
   }
 
-  .doc-body { padding: 32px; }
+  .doc-body { padding: 32px; font-family: 'Segoe UI', Calibri, Arial, sans-serif; font-size: 12pt; line-height: 1.5; }
 
   .doc-section {
     margin-bottom: 28px;
@@ -665,6 +665,21 @@
     </div>
     <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
       <button type="button" onclick="addAppointment()" style="width:100%; padding:6px 10px; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-family:var(--mono); letter-spacing:0.04em;">+ Add Appointment</button>
+
+        <div class="sidebar-section-sub" style="margin-top:14px;border-top:1px solid #e0e0d6;padding-top:12px;">
+          <div class="sidebar-label" style="font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:#5a6a5a;margin-bottom:8px;">Visiting Nurse / Home Services</div>
+          <label class="field-label" style="display:flex;align-items:center;gap:8px;"><label class="toggle-switch"><input type="checkbox" id="t-vna-include" onchange="render();document.getElementById('vna-fields').style.display=this.checked?'block':'none'"><span class="toggle-track"></span></label>Include VNA / Home Visit</label>
+          <div id="vna-fields" style="display:none;margin-top:8px;">
+            <label class="field-label">Agency Name</label>
+            <input class="field-input" id="f-vna-agency" type="text" placeholder="e.g. Baystate Visiting Nurse" oninput="render()">
+            <label class="field-label">Visit Frequency</label>
+            <input class="field-input" id="f-vna-freq" type="text" placeholder="e.g. 3x/week for 4 weeks" oninput="render()">
+            <label class="field-label">Contact Number</label>
+            <input class="field-input" id="f-vna-phone" type="text" placeholder="e.g. (413) 794-0000" oninput="render()">
+            <label class="field-label">Additional Notes</label>
+            <textarea class="field-input" id="f-vna-notes" rows="3" placeholder="e.g. Nurse will call within 24 hrs to schedule first visit" oninput="render()"></textarea>
+          </div>
+        </div>
     </div>
   </div>
 
@@ -733,12 +748,7 @@
     <div class="toggle-item" onclick="toggle('prep')">
       <label class="toggle-switch"><input type="checkbox" id="t-prep" onchange="render()"><span class="toggle-track"></span></label>
       <span class="toggle-label">PREP Program (First-episode psychosis)</span>
-    </div>
-    <div class="toggle-item" onclick="toggle('vna')">
-      <label class="toggle-switch"><input type="checkbox" id="t-vna" onchange="render()"><span class="toggle-track"></span></label>
-      <span class="toggle-label">Visiting Nurse Referral</span>
-    </div>
-    <div class="toggle-item" onclick="toggle('group-home')">
+    </div>    <div class="toggle-item" onclick="toggle('group-home')">
       <label class="toggle-switch"><input type="checkbox" id="t-group-home" onchange="render()"><span class="toggle-track"></span></label>
       <span class="toggle-label">Group Home Discharge</span>
     </div>
@@ -990,6 +1000,21 @@ const appointments = getAppointments();
       fu += '<p>You have follow-up services scheduled. Please confirm the details with your care team.</p>';
     }
     html += section('Follow-up Appointments', fu);
+      // VNA output inside followup section
+    var vnaChk = document.getElementById('t-vna-include');
+    if (vnaChk && vnaChk.checked) {
+      var vnaAgency = (document.getElementById('f-vna-agency')||{}).value||'';
+      var vnaFreq   = (document.getElementById('f-vna-freq')||{}).value||'';
+      var vnaPhone  = (document.getElementById('f-vna-phone')||{}).value||'';
+      var vnaNotes  = (document.getElementById('f-vna-notes')||{}).value||'';
+      html += '<div class="appt-block" style="margin-top:10px;padding:8px 12px;background:#f0f4f8;border-radius:4px;">';
+      html += '<div class="appt-type" style="font-weight:700;margin-bottom:4px;">Visiting Nurse / Home Services</div>';
+      if(vnaAgency) html += '<div><span style="color:#555;">Agency:</span> '+vnaAgency+'</div>';
+      if(vnaFreq)   html += '<div><span style="color:#555;">Frequency:</span> '+vnaFreq+'</div>';
+      if(vnaPhone)  html += '<div><span style="color:#555;">Contact:</span> '+vnaPhone+'</div>';
+      if(vnaNotes)  html += '<div style="margin-top:4px;font-style:italic;">'+vnaNotes+'</div>';
+      html += '</div>';
+    }
   }
 
   if (chk('t-please-note')) {
@@ -1129,16 +1154,7 @@ const appointments = getAppointments();
     `, 'Optional');
   }
 
-  if (chk('t-vna')) {
-    count++;
-    html += section('Visiting Nurse Referral', `
-      ${addr('Medical Resources Home Health Corp. (MRHHC)','Referral placed for visiting nurse services','Contact if not heard from by tomorrow','(413) 592-4600')}
-      ${addr('Gentiva Visiting Nurse Association','Referral placed for visiting nurse services','Contact if not heard from by tomorrow','(413) 733-1132')}
-      ${addr('Personal Touch Visiting Nurses','Referral placed for visiting nurse services','Contact if not heard from by tomorrow','(413) 747-7344')}
-    `, 'Optional');
-  }
-
-  if (chk('t-group-home')) {
+    if (chk('t-group-home')) {
     count++;
     html += section('Group Home Discharge', `
       <p>You are discharging back to your group home today. You will be picked up by group home staff.</p>
@@ -1357,103 +1373,130 @@ const appointments = getAppointments();
 }
 
 function copyText() {
-  const body = document.getElementById('doc-body');
+  var body = document.getElementById('doc-body');
   if (!body) return;
-  const btn = document.getElementById('copy-btn');
+  var btn = document.getElementById('copy-btn');
 
-  // Plain-text fallback string (preserves line breaks)
-  function nodeToText(node) {
-    if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+  // ── Plain-text renderer ──
+  // Walks the rendered DOM and converts to clean plain text with
+  // ALL CAPS section headings, blank lines between sections, no dividers.
+  function nodeToPlain(node, opts) {
+    opts = opts || { depth: 0 };
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent;
+    }
     if (node.nodeType !== Node.ELEMENT_NODE) return '';
-    let t = '';
-    for (const child of node.childNodes) t += nodeToText(child);
-    const tag = node.tagName;
-    if (['P','DIV','H1','H2','H3','H4','LI','TR','BR','SECTION','HEADER'].includes(tag)) t += '\n';
-    return t;
+    var tag = node.tagName.toUpperCase();
+    var cls = node.className || '';
+
+    // Skip purely decorative elements
+    if (tag === 'STYLE' || tag === 'SCRIPT') return '';
+
+    // Gather children text first
+    var inner = '';
+    node.childNodes.forEach(function(c){ inner += nodeToPlain(c, opts); });
+    inner = inner.replace(/[ \t]+/g, ' ').trim();
+
+    // Section headings (e.g. .section-label, .doc-section-head)
+    if (cls.indexOf('section-label') > -1 || cls.indexOf('section-head') > -1 ||
+        cls.indexOf('doc-section') > -1 || tag === 'H1' || tag === 'H2' || tag === 'H3') {
+      return inner ? nl + nl + inner.toUpperCase() + nl + nl : '';
+    }
+
+    // Header block (patient name, dates etc)
+    if (cls.indexOf('doc-header') > -1 || cls.indexOf('header-block') > -1) {
+      return inner ? inner + nl + nl : '';
+    }
+
+    // Table rows — separate cells with spaces, rows with newlines
+    if (tag === 'TR') {
+      var cells = [];
+      node.querySelectorAll('td,th').forEach(function(cell){
+        var ct = cell.innerText.replace(/\s+/g,' ').trim();
+        if(ct) cells.push(ct);
+      });
+      return cells.length ? cells.join('   ') + nl : '';
+    }
+    if (tag === 'TD' || tag === 'TH') return ''; // handled by TR
+
+    // List items
+    if (tag === 'LI') return inner ? '  • ' + inner + nl : '';
+
+    // Appointment blocks
+    if (cls.indexOf('appt-block') > -1) {
+      return inner ? nl + inner + nl : '';
+    }
+
+    // Generic block elements — add newline after
+    var blockTags = ['P','DIV','SECTION','ARTICLE','HEADER','FOOTER','BR','HR'];
+    if (blockTags.indexOf(tag) > -1) {
+      return inner ? inner + nl : nl;
+    }
+
+    return inner;
   }
 
-  // Build a clean, self-contained HTML document so pasted output keeps formatting
-  function buildRichHtml() {
-    const inner = body.innerHTML;
-    let css = '';
-    try {
-      for (const sheet of document.styleSheets) {
-        try { for (const rule of sheet.cssRules) css += rule.cssText + '\n'; } catch (e) {}
-      }
-    } catch (e) {}
-    return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + css + '</style></head><body class="doc-body-export">' + inner + '</body></html>';
-  }
+  // Build plain text from the rendered body
+  var raw = nodeToPlain(body);
 
-  const plain = nodeToText(body).replace(/\n{3,}/g, '\n\n').trim();
-  const rich = buildRichHtml();
+  // Clean up: collapse 3+ blank lines to 2, trim edges
+  var plain = raw
+    .replace(/\r\n/g, nl)
+    .replace(/[ \t]+$/gm, '')       // strip trailing spaces per line
+    .replace(/\n{3,}/g, nl + nl)    // max 2 consecutive blank lines
+    .trim();
 
   function flashOk() {
     if (!btn) return;
-    const orig = btn.textContent;
+    var orig = btn.textContent;
     btn.textContent = '\u2713 Copied!';
     setTimeout(function(){ btn.textContent = orig; }, 1800);
   }
 
-  // PRIMARY: rich-text copy (text/html + text/plain) so Word/email keep formatting
-  if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
-    try {
-      const item = new ClipboardItem({
-        'text/html': new Blob([rich], { type: 'text/html' }),
-        'text/plain': new Blob([plain], { type: 'text/plain' })
-      });
-      navigator.clipboard.write([item]).then(flashOk).catch(function(){ legacyRichCopy(); });
-      return;
-    } catch (e) { /* fall through */ }
+  // Try modern clipboard API first
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(plain).then(flashOk).catch(function(){ legacyCopy(); });
+    return;
   }
-  legacyRichCopy();
+  legacyCopy();
 
-  // SECONDARY: select the rendered (formatted) node and execCommand('copy').
-  // This copies RICH text (not plain) because we select live formatted DOM.
-  function legacyRichCopy() {
-    try {
-      const sel = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(body);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      const ok = document.execCommand('copy');
-      sel.removeAllRanges();
-      if (ok) { flashOk(); return; }
-    } catch (e) {}
-    showFallbackModal(plain);
+  // Legacy execCommand fallback (selects a hidden textarea)
+  function legacyCopy() {
+    var ta = document.createElement('textarea');
+    ta.value = plain;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); flashOk(); } catch(e) { showFallbackModal(plain); }
+    document.body.removeChild(ta);
   }
 
-  // LAST RESORT: modal with the (formatted) content selected for manual copy
+  // Last-resort modal — shows pre-selected plain text for manual copy
   function showFallbackModal(text) {
-    let modal = document.getElementById('copy-modal');
+    var modal = document.getElementById('copy-modal');
     if (!modal) { modal = document.createElement('div'); modal.id = 'copy-modal'; document.body.appendChild(modal); }
-    modal.innerHTML = '';
-    modal.style.display = 'block';
-    const backdrop = document.createElement('div'); backdrop.id = 'copy-modal-backdrop';
-    const box = document.createElement('div'); box.id = 'copy-modal-box';
-    const header = document.createElement('div'); header.id = 'copy-modal-header';
+    modal.innerHTML = ''; modal.style.display = 'block';
+    var backdrop = document.createElement('div'); backdrop.id = 'copy-modal-backdrop';
+    var box = document.createElement('div'); box.id = 'copy-modal-box';
+    var header = document.createElement('div'); header.id = 'copy-modal-header';
     header.innerHTML = '<span>Copy discharge instructions</span>';
-    const closeX = document.createElement('button'); closeX.textContent = '\u00d7'; closeX.style.cssText = 'background:none;border:none;font-size:22px;cursor:pointer;line-height:1;';
+    var closeX = document.createElement('button');
+    closeX.textContent = '\u00d7'; closeX.style.cssText = 'background:none;border:none;font-size:22px;cursor:pointer;';
     closeX.onclick = function(){ modal.style.display = 'none'; };
     header.appendChild(closeX);
-    const live = document.createElement('div'); live.id = 'copy-modal-rich';
-    live.setAttribute('contenteditable', 'true');
-    live.style.cssText = 'max-height:320px;overflow:auto;border:1px solid #ccc;border-radius:6px;padding:10px;background:#fff;';
-    live.innerHTML = body.innerHTML;
-    const footer = document.createElement('div'); footer.id = 'copy-modal-footer';
-    const selBtn = document.createElement('button'); selBtn.id = 'copy-modal-select-btn'; selBtn.textContent = 'Select All & Copy';
-    selBtn.onclick = function(){
-      const sel = window.getSelection(); const range = document.createRange();
-      range.selectNodeContents(live); sel.removeAllRanges(); sel.addRange(range);
-      try { document.execCommand('copy'); flashOk(); } catch (e) {}
-    };
-    const hint = document.createElement('div'); hint.style.cssText = 'font-size:12px;color:#666;margin-top:8px;';
-    hint.textContent = 'Tip: click Select All & Copy, or press ' + (navigator.platform.indexOf('Mac')>-1 ? 'Cmd+A then Cmd+C' : 'Ctrl+A then Ctrl+C') + '.';
+    var ta2 = document.createElement('textarea'); ta2.id = 'copy-modal-text';
+    ta2.value = text; ta2.readOnly = true;
+    ta2.style.cssText = 'width:100%;height:280px;font-family:monospace;font-size:13px;border:1px solid #ccc;border-radius:4px;padding:8px;resize:vertical;';
+    var footer = document.createElement('div'); footer.id = 'copy-modal-footer';
+    var selBtn = document.createElement('button'); selBtn.id = 'copy-modal-select-btn'; selBtn.textContent = 'Select All & Copy';
+    selBtn.onclick = function(){ ta2.focus(); ta2.select(); try{ document.execCommand('copy'); flashOk(); }catch(e){} };
+    var hint = document.createElement('div'); hint.style.cssText = 'font-size:12px;color:#666;margin-top:6px;';
+    hint.textContent = 'Press '+(navigator.platform.indexOf('Mac')>-1?'Cmd+A then Cmd+C':'Ctrl+A then Ctrl+C')+' to copy.';
     footer.appendChild(selBtn);
-    box.appendChild(header); box.appendChild(live); box.appendChild(hint); box.appendChild(footer);
+    box.appendChild(header); box.appendChild(ta2); box.appendChild(hint); box.appendChild(footer);
     backdrop.onclick = function(){ modal.style.display = 'none'; };
     modal.appendChild(backdrop); modal.appendChild(box);
-    setTimeout(function(){ const sel = window.getSelection(); const range = document.createRange(); range.selectNodeContents(live); sel.removeAllRanges(); sel.addRange(range); }, 100);
+    setTimeout(function(){ ta2.focus(); ta2.select(); }, 100);
   }
 }
 document.addEventListener('DOMContentLoaded', function() { render(); });
