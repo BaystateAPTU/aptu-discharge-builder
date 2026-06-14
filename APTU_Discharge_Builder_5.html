@@ -1373,132 +1373,105 @@ const appointments = getAppointments();
 }
 
 function copyText() {
-  var nl = '\n';
-  var body = document.getElementById('doc-body');
-  if (!body) return;
-  var btn = document.getElementById('copy-btn');
+  var SEP = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  var lines = [];
 
-  // ── Plain-text renderer ──
-  // Walks the rendered DOM and converts to clean plain text with
-  // ALL CAPS section headings, blank lines between sections, no dividers.
-  function nodeToPlain(node, opts) {
-    opts = opts || { depth: 0 };
-    if (node.nodeType === Node.TEXT_NODE) {
-      return node.textContent;
-    }
-    if (node.nodeType !== Node.ELEMENT_NODE) return '';
-    var tag = node.tagName.toUpperCase();
+  var docBody = document.getElementById('doc-body');
+  if (!docBody) { alert('No document found.'); return; }
+
+  function clean(str) {
+    return (str || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function walkNode(node, indent) {
+    var tag = node.tagName;
     var cls = node.className || '';
 
-    // Skip purely decorative elements
-    if (tag === 'STYLE' || tag === 'SCRIPT') return '';
+    if (node.style && node.style.display === 'none') return;
+    if (tag === 'H4') return;
 
-    // Gather children text first
-    var inner = '';
-    node.childNodes.forEach(function(c){ inner += nodeToPlain(c, opts); });
-    inner = inner.replace(/[ \t]+/g, ' ').trim();
-
-    // Section headings (e.g. .section-label, .doc-section-head)
-    if (cls.indexOf('section-label') > -1 || cls.indexOf('section-head') > -1 ||
-        cls.indexOf('doc-section') > -1 || tag === 'H1' || tag === 'H2' || tag === 'H3') {
-      return inner ? nl + nl + inner.toUpperCase() + nl + nl : '';
-    }
-
-    // Header block (patient name, dates etc)
-    if (cls.indexOf('doc-header') > -1 || cls.indexOf('header-block') > -1) {
-      return inner ? inner + nl + nl : '';
-    }
-
-    // Table rows — separate cells with spaces, rows with newlines
-    if (tag === 'TR') {
-      var cells = [];
-      node.querySelectorAll('td,th').forEach(function(cell){
-        var ct = cell.innerText.replace(/\s+/g,' ').trim();
-        if(ct) cells.push(ct);
+    if (tag === 'UL') {
+      Array.from(node.querySelectorAll('li')).forEach(function(li) {
+        lines.push(indent + '• ' + clean(li.textContent));
       });
-      return cells.length ? cells.join('   ') + nl : '';
-    }
-    if (tag === 'TD' || tag === 'TH') return ''; // handled by TR
-
-    // List items
-    if (tag === 'LI') return inner ? '  • ' + inner + nl : '';
-
-    // Appointment blocks
-    if (cls.indexOf('appt-block') > -1) {
-      return inner ? nl + inner + nl : '';
+      return;
     }
 
-    // Generic block elements — add newline after
-    var blockTags = ['P','DIV','SECTION','ARTICLE','HEADER','FOOTER','BR','HR'];
-    if (blockTags.indexOf(tag) > -1) {
-      return inner ? inner + nl : nl;
+    if (tag === 'P') {
+      var txt = clean(node.textContent);
+      if (txt) lines.push(indent + txt);
+      return;
     }
 
-    return inner;
+    if (cls.includes('contact-grid')) {
+      var items = Array.from(node.querySelectorAll('.contact-item'));
+      for (var i = 0; i < items.length; i += 2) {
+        var left = items[i];
+        var right = items[i + 1];
+        var leftLoc = clean(left.querySelector('.location') ? left.querySelector('.location').textContent : '');
+        var leftPhone = clean(left.querySelector('.phone') ? left.querySelector('.phone').textContent : '');
+        var leftStr = leftLoc + ': ' + leftPhone;
+        if (right) {
+          var rightLoc = clean(right.querySelector('.location') ? right.querySelector('.location').textContent : '');
+          var rightPhone = clean(right.querySelector('.phone') ? right.querySelector('.phone').textContent : '');
+          var rightStr = rightLoc + ': ' + rightPhone;
+          if (leftStr.length <= 36) {
+            lines.push(indent + leftStr.padEnd(38) + rightStr);
+          } else {
+            lines.push(indent + leftStr);
+            lines.push(indent + rightStr);
+          }
+        } else {
+          lines.push(indent + leftStr);
+        }
+      }
+      return;
+    }
+
+    if (cls.includes('app-list')) {
+      Array.from(node.children).forEach(function(item) {
+        lines.push(indent + '• ' + clean(item.textContent));
+      });
+      return;
+    }
+
+    if (tag === 'DIV') {
+      var hasImg = node.querySelector('img, canvas, svg');
+      if (hasImg && !node.querySelector('p, ul, li')) return;
+      Array.from(node.children).forEach(function(child) { walkNode(child, indent); });
+      return;
+    }
+
+    var txt2 = clean(node.textContent);
+    if (txt2) lines.push(indent + txt2);
   }
 
-  // Build plain text from the rendered body
-  var raw = nodeToPlain(body);
+  var partHeader = docBody.querySelector('.part-header');
+  if (partHeader) {
+    lines.push('▌ ' + clean(partHeader.textContent).toUpperCase());
+    lines.push('');
+  }
 
-  // Clean up: collapse 3+ blank lines to 2, trim edges
-  var plain = raw
-    .replace(/\r\n/g, nl)
-    .replace(/[ \t]+$/gm, '')       // strip trailing spaces per line
-    .replace(/\n{3,}/g, nl + nl)    // max 2 consecutive blank lines
-    .trim();
+  var sections = Array.from(docBody.querySelectorAll('.doc-section'));
+  sections.forEach(function(sec) {
+    lines.push(SEP);
+    var h4 = sec.querySelector('h4');
+    if (h4) lines.push('◆ ' + h4.textContent.trim().toUpperCase());
+    Array.from(sec.children).forEach(function(child) {
+      if (child.tagName === 'H4') return;
+      walkNode(child, '  ');
+    });
+  });
 
-  function flashOk() {
-    if (!btn) return;
+  lines.push(SEP);
+
+  var output = lines.join('\n');
+  navigator.clipboard.writeText(output).then(function() {
+    var btn = document.getElementById('copy-btn');
     var orig = btn.textContent;
-    btn.textContent = '\u2713 Copied!';
-    setTimeout(function(){ btn.textContent = orig; }, 1800);
-  }
-
-  // Try modern clipboard API first
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(plain).then(flashOk).catch(function(){ legacyCopy(); });
-    return;
-  }
-  legacyCopy();
-
-  // Legacy execCommand fallback (selects a hidden textarea)
-  function legacyCopy() {
-    var ta = document.createElement('textarea');
-    ta.value = plain;
-    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
-    try { document.execCommand('copy'); flashOk(); } catch(e) { showFallbackModal(plain); }
-    document.body.removeChild(ta);
-  }
-
-  // Last-resort modal — shows pre-selected plain text for manual copy
-  function showFallbackModal(text) {
-    var modal = document.getElementById('copy-modal');
-    if (!modal) { modal = document.createElement('div'); modal.id = 'copy-modal'; document.body.appendChild(modal); }
-    modal.innerHTML = ''; modal.style.display = 'block';
-    var backdrop = document.createElement('div'); backdrop.id = 'copy-modal-backdrop';
-    var box = document.createElement('div'); box.id = 'copy-modal-box';
-    var header = document.createElement('div'); header.id = 'copy-modal-header';
-    header.innerHTML = '<span>Copy discharge instructions</span>';
-    var closeX = document.createElement('button');
-    closeX.textContent = '\u00d7'; closeX.style.cssText = 'background:none;border:none;font-size:22px;cursor:pointer;';
-    closeX.onclick = function(){ modal.style.display = 'none'; };
-    header.appendChild(closeX);
-    var ta2 = document.createElement('textarea'); ta2.id = 'copy-modal-text';
-    ta2.value = text; ta2.readOnly = true;
-    ta2.style.cssText = 'width:100%;height:280px;font-family:monospace;font-size:13px;border:1px solid #ccc;border-radius:4px;padding:8px;resize:vertical;';
-    var footer = document.createElement('div'); footer.id = 'copy-modal-footer';
-    var selBtn = document.createElement('button'); selBtn.id = 'copy-modal-select-btn'; selBtn.textContent = 'Select All & Copy';
-    selBtn.onclick = function(){ ta2.focus(); ta2.select(); try{ document.execCommand('copy'); flashOk(); }catch(e){} };
-    var hint = document.createElement('div'); hint.style.cssText = 'font-size:12px;color:#666;margin-top:6px;';
-    hint.textContent = 'Press '+(navigator.platform.indexOf('Mac')>-1?'Cmd+A then Cmd+C':'Ctrl+A then Ctrl+C')+' to copy.';
-    footer.appendChild(selBtn);
-    box.appendChild(header); box.appendChild(ta2); box.appendChild(hint); box.appendChild(footer);
-    backdrop.onclick = function(){ modal.style.display = 'none'; };
-    modal.appendChild(backdrop); modal.appendChild(box);
-    setTimeout(function(){ ta2.focus(); ta2.select(); }, 100);
-  }
+    btn.textContent = '✓ Copied!';
+    setTimeout(function() { btn.textContent = orig; }, 2000);
+  });
 }
 document.addEventListener('DOMContentLoaded', function() { render(); });
 </script>
