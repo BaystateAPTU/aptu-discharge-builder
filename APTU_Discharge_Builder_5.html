@@ -1474,6 +1474,140 @@ function copyText() {
   });
 }
 document.addEventListener('DOMContentLoaded', function() { render(); });
+  
+/* ===== Spanish translation toggle (added) ===== */
+(function(){
+  if (window.__esToggleInstalled) return;
+  window.__esToggleInstalled = true;
+
+  /* Curated EN -> ES map for this discharge builder's boilerplate.
+     Proper nouns, phone numbers, program names and [bracketed placeholders]
+     are intentionally omitted so they stay unchanged.
+     NOTE: Spanish wording should be reviewed by a bilingual clinician. */
+  var MAP = {
+    "Part 1 \u2014 Core Sections":"Parte 1 \u2014 Secciones Principales",
+    "Part 2 \u2014 Optional Modules":"Parte 2 \u2014 M\u00f3dulos Opcionales",
+    "Opening Statement":"Declaraci\u00f3n Inicial",
+    ", you were admitted to Baystate APTU on":", usted fue admitido/a en Baystate APTU el",
+    "from":"desde",
+    "due to":"debido a",
+    "in the context of":"en el contexto de",
+    "If You Have Questions, Please Call":"Si Tiene Preguntas, Por Favor Llame",
+    "24/7 contact, including studies pending at discharge:":"Contacto 24/7, incluyendo estudios pendientes al momento del alta:",
+    "APTU Main RN":"Enfermero/a Principal de APTU",
+    "National Crisis":"Crisis Nacional",
+    "MA Behavioral Health Helpline":"L\u00ednea de Ayuda de Salud Conductual de MA",
+    "Behavioral Health Clinician:":"Cl\u00ednico/a de Salud Conductual:",
+    "Good luck and take care.":"Buena suerte y cu\u00eddese.",
+    "Best Contact Number for Follow-up:":"Mejor N\u00famero de Contacto para Seguimiento:",
+    "Transportation for Follow-up:":"Transporte para el Seguimiento:",
+    "Follow-up Appointments":"Citas de Seguimiento",
+    "You have follow-up services scheduled. Please confirm the details with your care team.":"Usted tiene servicios de seguimiento programados. Por favor confirme los detalles con su equipo de atenci\u00f3n.",
+    "Please Note":"Tenga en Cuenta",
+    "Some agencies will automatically cancel your medication appointment if you do not attend your therapy appointment.":"Algunas agencias cancelar\u00e1n autom\u00e1ticamente su cita de medicamentos si no asiste a su cita de terapia.",
+    "Bring your insurance cards and photo ID with you to all appointments.":"Traiga sus tarjetas de seguro y una identificaci\u00f3n con foto a todas las citas.",
+    "Bring these discharge instructions with you to all appointments and show your follow-up care providers.":"Traiga estas instrucciones de alta a todas las citas y mu\u00e9strelas a sus proveedores de atenci\u00f3n de seguimiento.",
+    "Bring all of your medications with you to your medication appointment.":"Traiga todos sus medicamentos a su cita de medicamentos.",
+    "Safety Planning":"Plan de Seguridad",
+    "People to Call for Support:":"Personas a Quienes Llamar para Apoyo:",
+    "Call family":"Llame a un familiar",
+    "Call crisis:":"Llame a crisis:",
+    "Call":"Llame al",
+    "or":"o",
+    "Speak with your support person":"Hable con su persona de apoyo",
+    "Talk with your therapist":"Hable con su terapeuta",
+    "Call the unit and speak with staff:":"Llame a la unidad y hable con el personal:",
+    "Mobile Apps for Safety Plan":"Aplicaciones M\u00f3viles para el Plan de Seguridad",
+    "Here are some safety apps you can download to your mobile device:":"Aqu\u00ed hay algunas aplicaciones de seguridad que puede descargar en su dispositivo m\u00f3vil:",
+    "Online Resources & Safety Apps":"Recursos en L\u00ednea y Aplicaciones de Seguridad",
+    "Scan for resources":"Escanee para recursos",
+    "Scan the QR code":"Escanee el c\u00f3digo QR",
+    "for a full list of mental health resources, including:":"para una lista completa de recursos de salud mental, incluyendo:",
+    "Crisis chat & text lines (988, Crisis Text Line)":"L\u00edneas de chat y texto de crisis (988, Crisis Text Line)",
+    "Mobile safety plan apps":"Aplicaciones de plan de seguridad m\u00f3vil",
+    "NAMI, SAMHSA, and other online supports":"NAMI, SAMHSA y otros apoyos en l\u00ednea",
+    "Or visit:":"O visite:",
+    "Psychiatric Crisis Services":"Servicios Psiqui\u00e1tricos de Crisis",
+    "Refusals":"Rechazos",
+    "Discharge to Medicine":"Alta a Medicina",
+    "Medical Records Request":"Solicitud de Expedientes M\u00e9dicos",
+    "Crisis Contacts":"Contactos de Crisis"
+  };
+
+  function tr(val){
+    var key = val.trim();
+    if(!Object.prototype.hasOwnProperty.call(MAP, key)) return null;
+    var lead = val.match(/^\s*/)[0];
+    var trail = val.match(/\s*$/)[0];
+    return lead + MAP[key] + trail;
+  }
+
+  function apply(toSpanish){
+    var db = document.getElementById('doc-body');
+    if(!db) return;
+    var walker = document.createTreeWalker(db, NodeFilter.SHOW_TEXT, null, false);
+    var nodes = [], n;
+    while(n = walker.nextNode()) nodes.push(n);
+    nodes.forEach(function(node){
+      if(toSpanish){
+        if(node.__origEN === undefined) node.__origEN = node.nodeValue;
+        var t = tr(node.__origEN);
+        if(t !== null) node.nodeValue = t;
+      } else if(node.__origEN !== undefined){
+        node.nodeValue = node.__origEN;
+      }
+    });
+  }
+
+  window.__esLang = 'en';
+  window.__esApply = apply;
+
+  /* Re-apply Spanish after each render() so edits to patient fields persist. */
+  if(typeof window.render === 'function'){
+    var _render = window.render;
+    window.render = function(){
+      var r = _render.apply(this, arguments);
+      if(window.__esLang === 'es'){
+        var db = document.getElementById('doc-body');
+        if(db){
+          var w = document.createTreeWalker(db, NodeFilter.SHOW_TEXT, null, false), x;
+          while(x = w.nextNode()) delete x.__origEN;
+        }
+        apply(true);
+      }
+      return r;
+    };
+  }
+
+  /* Add the toggle button next to Copy to Clipboard. */
+  function addButton(){
+    var copyBtn = document.getElementById('copy-btn');
+    if(!copyBtn || document.getElementById('es-lang-btn')) return;
+    var btn = document.createElement('button');
+    btn.id = 'es-lang-btn';
+    btn.type = 'button';
+    btn.className = 'btn btn-secondary';
+    btn.textContent = '\ud83c\udf10 Generate in Spanish';
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', function(){
+      if(window.__esLang === 'en'){
+        window.__esLang = 'es';
+        window.__esApply(true);
+        btn.textContent = '\ud83c\udf10 Show in English';
+      } else {
+        window.__esLang = 'en';
+        window.__esApply(false);
+        btn.textContent = '\ud83c\udf10 Generate in Spanish';
+      }
+    });
+    copyBtn.parentElement.insertBefore(btn, copyBtn.nextSibling);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', addButton);
+  } else {
+    addButton();
+  }
+})();
 </script>
 </body>
 </html>
