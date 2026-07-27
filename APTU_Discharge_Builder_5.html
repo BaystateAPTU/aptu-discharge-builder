@@ -960,7 +960,7 @@ const appointments = getAppointments();
   if (chk('t-opening')) {
     count++;
     html += section('Opening Statement', `
-      <pYou were admitted to Baystate APTU on ${field(admit,'[admission date]')} from ${field(referring,'[referring facility]')} due to ${field(symptoms,'[presenting symptoms]')} in the context of ${field(precipitants,'[precipitants/trigger]')}.</p>
+      <p>You were admitted to Baystate APTU on ${field(admit,'[admission date]')} from ${field(referring,'[referring facility]')} due to ${field(symptoms,'[presenting symptoms]')} in the context of ${field(precipitants,'[precipitants/trigger]')}.</p>
     `);
   }
 
