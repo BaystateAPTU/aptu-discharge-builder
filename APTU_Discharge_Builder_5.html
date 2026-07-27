@@ -800,6 +800,10 @@
       <label class="toggle-switch"><input type="checkbox" id="t-section35" onchange="render()"><span class="toggle-track"></span></label>
       <span class="toggle-label">Section 35</span>
     </div>
+    <div class="toggle-item" onclick="toggle('dv')">
+      <label class="toggle-switch"><input type="checkbox" id="t-dv" onchange="render()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Domestic Violence Resources</span>
+    </div>
     <div class="toggle-item" onclick="toggle('autism')">
       <label class="toggle-switch"><input type="checkbox" id="t-autism" onchange="render()"><span class="toggle-track"></span></label>
       <span class="toggle-label">Autism Resources</span>
@@ -1289,6 +1293,35 @@ const appointments = getAppointments();
       ${addr('Northstar Recovery Center','1319 Riverdale Street, W. Springfield, MA','','(833) 519-2226')}
       ${addr('Compass Recovery Center','975A Springfield Street, Feeding Hills, MA','','(844) 844-2978')}
       ${addr('CSO START IOP','8 Atwood Drive #201, Northampton, MA','Walk-in: Mon–Thu 10AM–4PM, Fri 10AM–2PM','(413) 582-0471')}
+    `, 'Optional');
+  }
+
+  if (chk('t-dv')) {
+    count++;
+    html += section('Domestic Violence Resources', `
+      <p><strong>National Domestic Violence Hotline:</strong> <em>thehotline.org</em></p>
+
+      <p style="margin-top:12px;font-weight:600;">SafeLink</p>
+      <ul style="margin:0 0 12px 20px;line-height:1.6;">
+        <li>Call: <strong>1-877-785-2020</strong></li>
+        <li>Chat: <em>casa.myrna.org/chat</em></li>
+        <li>Deaf or hard-of-hearing callers can access services via TTY at <strong>(877) 521-2601</strong> or through the Mass Relay service by dialing <strong>711</strong> within Massachusetts. From anywhere else, dial <strong>1-800-439-0183</strong> for English or <strong>1-800-930-9252</strong> for Spanish.</li>
+      </ul>
+
+      <p style="margin-top:12px;font-weight:600;">National Chatlines</p>
+      <ul style="margin:0 0 12px 20px;line-height:1.6;">
+        <li><strong>RAINN – National Sexual Assault Hotline:</strong> Available 24/7: 1-800-656-HOPE or text HOPE to 64673. <em>rainn.org/help-and-healing/hotline</em></li>
+        <li><strong>National Domestic Violence Hotline:</strong> Available 24/7: 1-800-799-SAFE (1-800-799-7233) or text START to 88788. <em>thehotline.org/get-help</em></li>
+        <li><strong>Love Is Respect</strong> (national dating violence resource focused on supporting youth): <em>loveisrespect.org</em> or text "loveis" to 22522, available 24/7.</li>
+      </ul>
+
+      <p style="margin-top:12px;font-weight:600;">Chatlines in Massachusetts</p>
+      <ul style="margin:0 0 0 20px;line-height:1.6;">
+        <li><strong>Boston Area Rape Crisis Center:</strong> Available daily 9am–11pm.</li>
+        <li><strong>Independence House</strong> (Cape Cod area; sexual and dating violence resource focused on supporting youth): Available Mon–Fri 9am–7pm. Hotline: <strong>800-439-6507</strong>, appointments: <strong>508-771-6507</strong>. <em>independencehouse.org</em></li>
+        <li><strong>Center for Hope and Healing</strong> (Lowell area sexual assault resource): Available Mon–Fri 9am–5pm. 24-hr phone line: <strong>800-542-5212</strong>. <em>chhinc.org/chat-with-us</em></li>
+        <li><strong>New Hope</strong> (southeastern MA; sexual and domestic violence resource): Available Mon–Fri 10am–2pm.</li>
+      </ul>
     `, 'Optional');
   }
 
