@@ -1402,7 +1402,7 @@ const appointments = getAppointments();
 }
 
 function copyText() {
-  var SEP = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  var SEP = '━━━━━━━━━━━━━━━━━━━━';
   var lines = [];
 
   var docBody = document.getElementById('doc-body');
@@ -1485,7 +1485,12 @@ function copyText() {
   sections.forEach(function(sec) {
     lines.push(SEP);
     var h4 = sec.querySelector('h4');
-    if (h4) lines.push('◆ ' + h4.textContent.trim().toUpperCase());
+        if (h4) {
+      var h4Clone = h4.cloneNode(true);
+      var tagEl = h4Clone.querySelector('.module-tag');
+      if (tagEl) tagEl.remove();
+      lines.push('◆ ' + h4Clone.textContent.trim().toUpperCase());
+    }
     Array.from(sec.children).forEach(function(child) {
       if (child.tagName === 'H4') return;
       walkNode(child, '  ');
